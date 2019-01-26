@@ -1,0 +1,52 @@
+#  vim: set et fenc=utf-8 ff=unix sts=2 sw=2 ts=2 :
+[ca]
+default_ca = CA_default
+
+[CA_default]
+dir = {{ certs__ca_path }}
+database = {{ certs__ca_database }}
+new_certs_dir = {{ certs__ca_newcerts_path }}
+serial = {{ certs__ca_serial }}
+private_key = {{ certs__cert_root_key }}
+certificate = {{ certs__cert_root_crt }}
+default_days = {{ certs__default_days }}
+default_md = sha256
+policy = policy_anything
+copy_extensions = copyall
+
+[policy_anything]
+countryName = optional
+stateOrProvinceName = optional
+localityName = optional
+organizationName = optional
+organizationalUnitName = optional
+commonName = supplied
+emailAddress = optional
+
+[req]
+default_bits = 2048
+encrypt_key = yes
+default_md = sha256
+prompt = no
+distinguished_name = req_distinguished_name
+req_extensions = v3_ca
+
+[req_distinguished_name]
+countryName = {{ certs__cert_subject.countryName }}
+stateOrProvinceName = {{ certs__cert_subject.stateOrProvinceName }}
+localityName = {{ certs__cert_subject.localityName }}
+organizationName = {{ certs__cert_subject.organizationName }}
+organizationalUnitName = {{ certs__cert_subject.organizationalUnitName }}
+commonName = {{ certs__cert_subject.commonName }}
+emailAddress = {{ certs__cert_subject.emailAddress }}
+
+[v3_ca]
+subjectAltName = @alt_names
+
+[alt_names]
+{% for ip in certs__alt_names.ip %}
+IP.{{ loop.index }} = {{ ip }}
+{% endfor %}
+{% for dns in certs__alt_names.dns %}
+DNS.{{ loop.index }} = {{ dns }}
+{% endfor %}

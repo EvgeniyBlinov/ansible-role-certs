@@ -1,0 +1,79 @@
+#  vim: set et fenc=utf-8 ff=unix sts=2 sw=2 ts=2 :
+---
+- name: Certs | Ensure cert dirs are exists
+  file:
+    path: "{{ item }}"
+    state: directory
+    recurse: yes
+  with_items:
+    - "{{ certs__root_path }}"
+    - "{{ certs__ca_path }}"
+    - "{{ certs__ca_newcerts_path }}"
+
+- name: Certs | Ensure cert files are exists
+  file:
+    path: "{{ item }}"
+    state: touch
+  with_items:
+    - "{{ certs__ca_database }}"
+
+- name: Certs | Ensure san.cnf is exists
+  template:
+    src: san.cnf
+    dest: "{{ certs__san_config }}"
+    force: yes
+
+- name: "Certs | Ensure {{ item }} is exists"
+  command: >
+    openssl genrsa -out {{ item }} 2048
+  args:
+    creates: "{{ item }}"
+    chdir: "{{ certs__root_path }}"
+  with_items:
+    - "{{ certs__cert_root_key }}"
+    - "{{ certs__cert_client_key }}"
+
+- name: Certs | Ensure root crt is exists
+  command: >
+      openssl req -x509 -new -nodes -days 365 \
+        -key {{ certs__cert_root_key }} \
+        -sha256 \
+        -subj "{{
+          '/CN='           + certs__cert_subject.commonName             +
+          ''
+        }}"
+        -out {{ certs__cert_root_crt }}
+  args:
+    creates: "{{ certs__cert_root_crt }}"
+    chdir: "{{ certs__root_path }}"
+  register: certs__r_cert_root_crt
+
+- name: Certs | Ensure client csr is exists
+  command: >
+      openssl req -new \
+        -config {{ certs__san_config }} \
+        -key {{ certs__cert_client_key }} \
+        -out {{ certs__cert_client_csr }}
+  args:
+    creates: "{{ certs__cert_client_csr }}"
+    chdir: "{{ certs__root_path }}"
+  register: certs__r_cert_client_csr
+
+- name: Certs | Create v3.ext file
+  template:
+    src: v3.ext
+    dest: "{{ certs__cert_v3ext }}"
+    force: yes
+
+- name: Certs | Ensure client crt is exists
+  command: >
+      openssl ca \
+        -config {{ certs__san_config }} \
+        -extfile {{ certs__cert_v3ext }} \
+        -create_serial -batch \
+        -in {{ certs__cert_client_csr }} \
+        -out {{ certs__cert_client_crt }}
+  args:
+    creates: "{{ certs__cert_client_crt }}"
+    chdir: "{{ certs__root_path }}"
+  register: certs__r_cert_client_csr

@@ -1,0 +1,36 @@
+#  vim: set et fenc=utf-8 ff=unix sts=2 sw=2 ts=2 :
+---
+certs__root_path: "{{ inventory_dir }}/.certs"
+certs__san_config: "{{ certs__root_path }}/san.cnf"
+certs__ca_path: "{{ certs__root_path }}/ca"
+certs__ca_newcerts_path: "{{ certs__ca_path }}/newcerts"
+certs__ca_database: "{{ certs__ca_path }}/index.txt"
+certs__ca_serial: "{{ certs__ca_path }}/serial"
+
+certs__cert_v3ext: "{{ certs__root_path }}/v3.ext"
+
+certs__cert_root_key: "{{ certs__root_path }}/rootca.key"
+certs__cert_root_csr: "{{ certs__root_path }}/rootca.csr"
+certs__cert_root_crt: "{{ certs__root_path }}/rootca.crt"
+certs__cert_client_key: "{{ certs__root_path }}/clientca.key"
+certs__cert_client_csr: "{{ certs__root_path }}/clientca.csr"
+certs__cert_client_crt: "{{ certs__root_path }}/clientca.crt"
+
+certs__common_name: example.com
+certs__cert_subject:
+  countryName: RU
+  stateOrProvinceName: Moscow
+  localityName: Moscow
+  organizationName: example.com
+  organizationalUnitName: main
+  commonName: "{{ certs__common_name }}"
+  emailAddress: support@example.com
+
+certs__default_days: 365
+
+certs__alt_names:
+  ip:
+    - 127.0.0.1
+    - "::1"
+  dns:
+    - localhost
